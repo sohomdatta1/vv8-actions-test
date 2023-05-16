@@ -11,7 +11,7 @@ rust-build:
 
 go-build:
 	mkdir -p ./artifacts
-	go build . -buildvcs=false
+	go build -buildvcs=false .
 	cp ./vv8-post-processor ./artifacts/vv8-post-processor
 
 publish:

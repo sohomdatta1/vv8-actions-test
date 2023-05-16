@@ -10,6 +10,6 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v3
       - name: Build postprocessors
-        uses: ./actions/build
+        uses: ./.github/action/build
 
 

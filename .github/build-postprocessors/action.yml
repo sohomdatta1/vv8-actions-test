@@ -3,4 +3,4 @@ description: 'Building postprocessors'
 runs:
   using: 'docker'
   image: 'Dockerfile'
-  entrypoint: /usr/bin/make -C post-processor
+  entrypoint: [ "make", "-C", "post-processor" ]

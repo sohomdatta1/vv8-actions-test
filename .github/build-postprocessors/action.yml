@@ -2,5 +2,5 @@ name: 'Build postprocessors'
 description: 'Building postprocessors'
 runs:
   using: 'docker'
-  image: '../../post-processor/build/Dockerfile.builder'
+  image: '../../post-processor/build/dockerfile.builder'
   entrypoint: make -C post-processor

@@ -1,7 +1,0 @@
-name: 'Build postprocessors'
-description: 'Building postprocessors'
-runs:
-  using: 'docker'
-  image: './post-processor/build/Dockerfile.builder'
-  context: './post-processor'
-  entrypoint: make -C /visiblev8

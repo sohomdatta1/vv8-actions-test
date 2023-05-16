@@ -9,9 +9,6 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
-      - name: Set outputs
-        id: short_revision
-        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Use a caching step
         uses: actions/cache@v3
         with:
@@ -32,7 +29,7 @@ jobs:
           images: sohomdatta1/visiblev8-postprocessors
           tags: |
             latest
-            ${{ steps.vars.outputs.sha_short }}
+            ${{ env.GITHUB_SHA_SHORT }}
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:

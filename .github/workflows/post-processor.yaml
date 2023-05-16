@@ -9,6 +9,9 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
+      - name: Set outputs
+        id: short_revision
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Use a caching step
         uses: actions/cache@v3
         with:
@@ -17,6 +20,11 @@ jobs:
           key: ${{ runner.os }}-build-artifacts
       - name: Build postprocessors
         uses: ./.github/build-postprocessors
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          username: sohomdatta1
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4
@@ -24,9 +32,9 @@ jobs:
           images: sohomdatta1/visiblev8-postprocessors
           tags: |
             latest
-            ${{ github.sha }}
+            ${{ steps.vars.outputs.sha_short }}
       - name: Build and push Docker image
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        uses: docker/build-push-action@v4
         with:
           context: ./post-processor/
           file: ./post-processor/build/Dockerfile.vv8

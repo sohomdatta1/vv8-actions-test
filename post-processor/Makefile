@@ -5,6 +5,7 @@ docker:
 
 rust-build:
 	mkdir -p ./artifacts
+	rustup default stable
 	cd ./adblock/adblock-oracle-rs && cargo build --release
 	cp ./adblock/adblock-oracle-rs/target/release/adblock-oracle-rs ./artifacts/adblock
 

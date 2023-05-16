@@ -1,0 +1,20 @@
+on:
+  push:
+    branches:
+      - 'main'
+jobs:
+  upload_to_docker:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          username: sohomdatta1
+          password: ${{ secret.DOCKERHUB_PASSWORD }}
+      - name:
+        run: |
+          apt update && apt install -y make git &&  git clone https://github.com/wspr-ncsu/visiblev8 && make -C visiblev8/post-processor docker
+

@@ -1,0 +1,12 @@
+.*.swp
+*.pp
+vv8-post-processor
+*.json
+*.log
+*.graphml
+
+.vscode
+.env
+.samples
+artifacts/
+tracker-radar/

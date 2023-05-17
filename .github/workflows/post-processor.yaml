@@ -22,6 +22,9 @@ jobs:
         with:
           username: sohomdatta1
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Extract short SHA
+        id: short_sha
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4
@@ -29,7 +32,7 @@ jobs:
           images: sohomdatta1/visiblev8-postprocessors
           tags: |
             type=raw,value=latest,enable=true
-            type=raw,value=${{ env.GITHUB_SHA_SHORT }},enable=true
+            type=raw,value=${{ steps.short_sha.outputs.sha_short }},enable=true
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:

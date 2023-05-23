@@ -6,8 +6,6 @@ jobs:
   upload_to_docker:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
-    container:
-      image: ubuntu:latest
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
@@ -43,5 +41,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - name: Remove artifacts
+        uses: docker://ubuntu:latest
+        with:
+          entrypoint: /usr/bin/rm
+          args: -rf ./post-processor/artifacts
 
 

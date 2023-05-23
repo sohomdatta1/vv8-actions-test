@@ -10,6 +10,7 @@ rust-build:
 	cp ./adblock/adblock-oracle-rs/target/release/adblock-oracle-rs ./artifacts/adblock
 
 go-build:
+	id
 	mkdir -p ./artifacts
 	go build -buildvcs=false .
 	cp ./vv8-post-processor ./artifacts/vv8-post-processor

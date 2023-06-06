@@ -5,7 +5,7 @@ on:
     schedule:
       - cron: '0 0 * * *'
 jobs:
-    build:
+    build_vv8:
         runs-on: self-hosted
         steps:
         - uses: actions/checkout@v2
@@ -45,3 +45,9 @@ jobs:
             VERSION: ${{ steps.get_release.outputs.fullVersion }}
           run: |
             cd builder && make build VERSION=$VERSION DEBUG=0 PUBLISH_ASSETS=0 TESTS=1 ANDROID=1
+            - name: Remove artifacts
+            if: success() || failure()
+            uses: docker://ubuntu:latest
+            with:
+              entrypoint: /usr/bin/rm
+              args: -rf .

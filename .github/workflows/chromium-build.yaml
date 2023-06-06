@@ -40,9 +40,16 @@ jobs:
                 fullVersion,
                 majorVersion
               };
+        - name: Test version number
+          run: |
+            echo "shouldPublish=${{ steps.get_release.outputs.shouldPublish }}"
+            echo "tag=${{ steps.get_release.outputs.tag }}"
+            echo "commit=${{ steps.get_release.outputs.commit }}"
+            echo "fullVersion=${{ steps.get_release.outputs.fullVersion }}"
+            echo "majorVersion=${{ steps.get_release.outputs.majorVersion }}"
         - name: Build VisibleV8
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
           env:
             VERSION: ${{ steps.get_release.outputs.fullVersion }}
           run: |
-            cd builder && make build VERSION=$VERSION DEBUG=0 PUBLISH_ASSETS=1 TESTS=1 ANDROID=1 
+            cd builder && make build VERSION=$VERSION DEBUG=0 PUBLISH_ASSETS=1 TESTS=1 ANDROID=1

@@ -42,14 +42,14 @@ jobs:
               };
         - name: Test version number
           run: |
-            echo "shouldPublish=${{ steps.get_release.outputs.result.shouldPublish }}"
-            echo "tag=${{ steps.get_release.outputs.result.tag }}"
-            echo "commit=${{ steps.get_release.outputs.result.commit }}"
-            echo "fullVersion=${{ steps.get_release.outputs.result.fullVersion }}"
-            echo "majorVersion=${{ steps.get_release.outputs.result.majorVersion }}"
+            echo "shouldPublish=${{ steps.get_release.outputs.result }}"
+            echo "tag=${{ steps.get_release.outputs.result }}"
+            echo "commit=${{ steps.get_release.outputs.result }}"
+            echo "fullVersion=${{ steps.get_release.outputs.result }}"
+            echo "majorVersion=${{ steps.get_release.outputs.result }}"
         - name: Build VisibleV8
           if: ${{ steps.get_release.outputs.result.shouldPublish == 'true' }}
           env:
-            VERSION: ${{ steps.get_release.outputs.result.fullVersion }}
+            VERSION: ${{ steps.get_release.outputs.fullVersion }}
           run: |
             cd builder && make build VERSION=$VERSION DEBUG=0 PUBLISH_ASSETS=1 TESTS=1 ANDROID=1

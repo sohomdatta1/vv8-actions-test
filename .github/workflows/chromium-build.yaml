@@ -1,0 +1,37 @@
+on:
+    push:
+      branches:
+        - 'master'
+    schedule:
+      - cron: '0 0 * * *'
+jobs:
+    build:
+        #runs-on: self-hosted
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v2
+        - name: Extract short SHA
+          id: short_sha
+          run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        
+        - uses: actions/github-script@v6
+          id: get_release
+          with:
+            script: |
+              const release = octokit.rest.repos.getLatestRelease({
+                'wspr-ncsu',
+                'visiblev8'
+              });
+              const tag = release.data.tag_name;
+              const [_, commit, fullVersion, majorVersion] = tag.match(/visiblev8_([0-9a-f]+)-(([0-9]+)\.[0-9.]+)/);
+              console.log(`tag: ${tag}`);
+              console.log(`commit: ${commit}`);
+              console.log(`fullVersion: ${fullVersion}`);
+              console.log(`majorVersion: ${majorVersion}`);
+              return {
+                tag,
+                commit,
+                fullVersion,
+                majorVersion
+              };
+          

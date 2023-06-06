@@ -13,7 +13,6 @@ jobs:
         - name: Extract short SHA
           id: short_sha
           run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-        
         - uses: actions/github-script@v6
           id: get_release
           with:
@@ -33,6 +32,7 @@ jobs:
               console.log(`currentGitCommit: ${currentGitCommit}`);
               console.log(`chromeReleaseVersion: ${chromeReleaseVersion}`);
               const shouldPublish = currentGitCommit !== commit || chromeReleaseVersion !== majorVersion;
+              console.log(`shouldPublish: ${shouldPublish}`);
               return {
                 shouldPublish,
                 tag,
@@ -40,4 +40,9 @@ jobs:
                 fullVersion,
                 majorVersion
               };
-          
+        - name: Build VisibleV8
+          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
+          env:
+            VERSION: ${{ steps.get_release.outputs.fullVersion }}
+          run: |
+            cd builder && make build VERSION=$VERSION DEBUG=0 PUBLISH_ASSETS=1 TESTS=1 ANDROID=1 

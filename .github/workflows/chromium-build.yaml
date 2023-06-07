@@ -35,7 +35,6 @@ jobs:
               console.log(`chromeReleaseVersion: ${chromeReleaseVersion}`);
               const shouldPublish = chromeReleaseVersion !== majorVersion;
               console.log(`shouldPublish: ${shouldPublish}`);
-              console.log(`isPush: ${isPush}`);
               core.setOutput('shouldPublish', shouldPublish);
               core.setOutput('tag', tag);
               core.setOutput('commit', commit);

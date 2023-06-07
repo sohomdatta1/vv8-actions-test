@@ -95,10 +95,14 @@ jobs:
           env:
             VERSION: ${{ steps.get_release.outputs.chromeReleaseVersion }}
             GIT_COMMIT: ${{ steps.short_sha.outputs.sha_short }}
-          run: |
-            ARTIFACT_NAME=visiblev8_$GIT_COMMIT-$VERSION.tar.gz
-            cd builder/artifacts && tar -czvf $ARTIFACT_NAME $VERSION/*.deb $VERSION/*.pickle $VERSION/*.json $VERSION/*.apk
-            echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+          uses: docker://ubuntu:latest
+          with:
+            entrypoint: /bin/bash
+            args: |
+              bash -c "ARTIFACT_NAME=visiblev8_$GIT_COMMIT-$VERSION.tar.gz && 
+              cd builder/artifacts && tar -czvf $ARTIFACT_NAME $VERSION/*.deb $VERSION/*.pickle $VERSION/*.json $VERSION/*.apk &&
+              echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT"
+            
         - name: Create a release
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
           uses: actions/github-script@v6

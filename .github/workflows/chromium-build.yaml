@@ -25,7 +25,7 @@ jobs:
               const tag = release.data.tag_name;
               const currentGitCommit = '${{ steps.short_sha.outputs.sha_short }}'
               const [_, commit, fullVersion, majorVersion] = tag.match(/visiblev8_([0-9a-f]+)-(([0-9]+)\.[0-9.]+)/);
-              const chromeReleaseVersion = '113.0.5672.163'//await (await fetch('https://omahaproxy.appspot.com/linux')).text();
+              const chromeReleaseVersion = '113.0.5672.126'//await (await fetch('https://omahaproxy.appspot.com/linux')).text();
               const chromeMajorVersion = chromeReleaseVersion.split('.')[0];
               console.log(`tag: ${tag}`);
               console.log(`commit: ${commit}`);
@@ -140,3 +140,8 @@ jobs:
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && ( success() || failure() )
           run: |
             docker system prune -f
+        - name: Cleaning built data
+          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && ( success() || failure() )
+          run: |
+            rm -rf ./builder/visiblev8_*-*.tar.gz
+          

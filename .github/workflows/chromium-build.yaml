@@ -33,7 +33,7 @@ jobs:
               console.log(`majorVersion: ${chromeMajorVersion}`);
               console.log(`currentGitCommit: ${currentGitCommit}`);
               console.log(`chromeReleaseVersion: ${chromeReleaseVersion}`);
-              const shouldPublish = chromeReleaseVersion !== majorVersion;
+              const shouldPublish = chromeReleaseVersion !== fullVersion;
               console.log(`shouldPublish: ${shouldPublish}`);
               core.setOutput('shouldPublish', shouldPublish);
               core.setOutput('tag', tag);

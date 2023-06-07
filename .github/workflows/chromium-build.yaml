@@ -56,8 +56,8 @@ jobs:
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
           id: artifact_name
           run: |
-            PACKAGE_NAME_AMD64=`find ./artifacts -name '*amd64.deb' -printf "%f\n" | sort -V | tail -n 1`
-            PACKAGE_NAME_ARM64=`find ./artifacts -name '*arm64.deb' -printf "%f\n" | sort -V | tail -n 1`
+            PACKAGE_NAME_AMD64=`find ./builder/artifacts -name '*amd64.deb' -printf "%f\n" | sort -V | tail -n 1`
+            PACKAGE_NAME_ARM64=`find ./builder/artifacts -name '*arm64.deb' -printf "%f\n" | sort -V | tail -n 1`
             echo "artifact_name_amd64=$PACKAGE_NAME_AMD64" >> $GITHUB_OUTPUT
             echo "artifact_name_arm64=$PACKAGE_NAME_ARM64" >> $GITHUB_OUTPUT
         - name: Log in to Docker Hub

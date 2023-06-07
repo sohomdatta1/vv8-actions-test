@@ -8,7 +8,7 @@ jobs:
     build_vv8:
         runs-on: self-hosted
         steps:
-        - uses: actions/checkout@v2
+        - uses: actions/checkout@v3
           with:
             clean: false
         - name: Extract short SHA
@@ -33,18 +33,21 @@ jobs:
               console.log(`majorVersion: ${chromeMajorVersion}`);
               console.log(`currentGitCommit: ${currentGitCommit}`);
               console.log(`chromeReleaseVersion: ${chromeReleaseVersion}`);
-              const shouldPublish = currentGitCommit !== commit || chromeReleaseVersion !== majorVersion;
+              const isPush = ${{ github.event_name == 'push' }};
+              const shouldPublish = currentGitCommit !== commit || chromeReleaseVersion !== majorVersion || isPush;
               console.log(`shouldPublish: ${shouldPublish}`);
+              console.log(`isPush: ${isPush}`);
               core.setOutput('shouldPublish', shouldPublish);
               core.setOutput('tag', tag);
               core.setOutput('commit', commit);
+              core.setOutput('isPush', isPush);
               core.setOutput('fullVersion', fullVersion);
               core.setOutput('majorVersion', majorVersion);
               core.setOutput('chromeReleaseVersion', chromeReleaseVersion);
               core.setOutput('currentGitCommit', currentGitCommit);
               core.setOutput('chromeMajorVersion', chromeMajorVersion);
         - name: Build VisibleV8
-          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
+          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} 
           env:
             VERSION: ${{ steps.get_release.outputs.chromeReleaseVersion }}
           run: |
@@ -57,12 +60,17 @@ jobs:
             PACKAGE_NAME_ARM64=`find ./artifacts -name '*arm64.deb' -printf "%f\n" | sort -V | tail -n 1`
             echo "artifact_name_amd64=$PACKAGE_NAME_AMD64" >> $GITHUB_OUTPUT
             echo "artifact_name_arm64=$PACKAGE_NAME_ARM64" >> $GITHUB_OUTPUT
+        - name: Log in to Docker Hub
+          uses: docker/login-action@v2
+          with:
+            username: sohomdatta1
+            password: ${{ secrets.DOCKERHUB_PASSWORD }}
         - name: Extract metadata (tags, labels) for Docker
           id: meta
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
           uses: docker/metadata-action@v4
           with:
-            images: visiblev8/vv8-base
+            images: sohomdatta1/vv8-base-test
             tags: |
               type=raw,value=latest,enable=true
               type=raw,value=${{ steps.short_sha.outputs.sha_short }}_${{ steps.get_release.outputs.chromeReleaseVersion }},enable=true

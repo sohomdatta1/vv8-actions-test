@@ -33,15 +33,12 @@ jobs:
               console.log(`majorVersion: ${chromeMajorVersion}`);
               console.log(`currentGitCommit: ${currentGitCommit}`);
               console.log(`chromeReleaseVersion: ${chromeReleaseVersion}`);
-              //const isPush = ${{ github.event_name == 'push' }};
-              const isPush = false;
-              const shouldPublish = currentGitCommit !== commit || chromeReleaseVersion !== majorVersion || isPush;
+              const shouldPublish = chromeReleaseVersion !== majorVersion;
               console.log(`shouldPublish: ${shouldPublish}`);
               console.log(`isPush: ${isPush}`);
               core.setOutput('shouldPublish', shouldPublish);
               core.setOutput('tag', tag);
               core.setOutput('commit', commit);
-              core.setOutput('isPush', isPush);
               core.setOutput('fullVersion', fullVersion);
               core.setOutput('majorVersion', majorVersion);
               core.setOutput('chromeReleaseVersion', chromeReleaseVersion);

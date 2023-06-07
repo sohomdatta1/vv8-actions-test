@@ -96,8 +96,10 @@ jobs:
             VERSION: ${{ steps.get_release.outputs.chromeReleaseVersion }}
             GIT_COMMIT: ${{ steps.short_sha.outputs.sha_short }}
           run: |
-            ARTIFACT_NAME=../visiblev8_$GIT_COMMIT-$VERSION.tar.gz
-            cd builder/artifacts && tar -czvf $ARTIFACT_NAME $VERSION/*.deb $VERSION/*.pickle $VERSION/*.json $VERSION/*.apk
+            ARTIFACT_FILE=../visiblev8_$GIT_COMMIT-$VERSION.tar.gz
+            ARTIFACT_NAME=visiblev8_$GIT_COMMIT-$VERSION.tar.gz
+            cd builder/artifacts && tar -czvf $ARTIFACT_FILE $VERSION/*.deb $VERSION/*.pickle $VERSION/*.json $VERSION/*.apk
+            echo "artifact_file=$ARTIFACT_FILE" >> $GITHUB_OUTPUT
             echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
         - name: Create a release
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
@@ -124,7 +126,7 @@ jobs:
             curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               -H "Content-Type: application/gzip" \
               --data-binary @./builder/artifacts/${{ steps.artifact.outputs.artifact_name }} \
-              "${{ steps.create_release.outputs.releaseUploadURL }}?name=${{ steps.artifact.outputs.artifact_name }}&label=${{ steps.artifact.outputs.artifact_name }}"
+              "${{ steps.create_release.outputs.releaseUploadURL }}?name=${{ steps.artifact.outputs.artifact_file }}&label=${{ steps.artifact.outputs.artifact_file }}"
             rm -rf ./builder/artifacts/${{ steps.artifact.outputs.artifact_name }}
         - name: Notify slack that the build succeeded
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && success()

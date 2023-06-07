@@ -95,11 +95,10 @@ jobs:
           env:
             VERSION: ${{ steps.get_release.outputs.chromeReleaseVersion }}
             GIT_COMMIT: ${{ steps.short_sha.outputs.sha_short }}
-          uses: docker://ubuntu:latest
-          with:
-            entrypoint: /usr/bin/bash
-            args: |
-              -c "ARTIFACT_NAME=visiblev8_$GIT_COMMIT-$VERSION.tar.gz && cd builder/artifacts && tar -czvf $ARTIFACT_NAME $VERSION/*.deb $VERSION/*.pickle $VERSION/*.json $VERSION/*.apk && echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT"
+          run: |
+            ARTIFACT_NAME=../visiblev8_$GIT_COMMIT-$VERSION.tar.gz
+            cd builder/artifacts && tar -czvf $ARTIFACT_NAME $VERSION/*.deb $VERSION/*.pickle $VERSION/*.json $VERSION/*.apk
+            echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
         - name: Create a release
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
           uses: actions/github-script@v6
@@ -125,12 +124,13 @@ jobs:
               -H "Content-Type: application/gzip" \
               --data-binary @./builder/artifacts/${{ steps.artifact.outputs.artifact_name }} \
               "${{ steps.create_release.outputs.releaseUploadURL }}?name=${{ steps.artifact.outputs.artifact_name }}&label=${{ steps.artifact.outputs.artifact_name }}"
+            rm -rf ./builder/artifacts/${{ steps.artifact.outputs.artifact_name }}
         - name: Notify slack that the build succeeded
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && success()
           run: |
             curl -X POST -H 'Content-type: application/json' --data '{"text":"VisibleV8 build '${{ steps.get_release.outputs.currentGitCommit }}' for Chromium version '${{ steps.get_release.outputs.chromeReleaseVersion }}' has been successful!"}' ${{ secrets.SLACK_WEBHOOK  }}
         - name: Notify slack that the build failed
-          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && success()
+          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && failure()
           run: |
             curl -X POST -H 'Content-type: application/json' --data '{"text":"VisibleV8 build '${{ steps.get_release.outputs.currentGitCommit }}'' for Chromium version '${{ steps.get_release.outputs.chromeReleaseVersion }}' failed. Check the latest logs for errors."}' ${{ secrets.SLACK_WEBHOOK  }}
         - name: Cleaning up docker environment

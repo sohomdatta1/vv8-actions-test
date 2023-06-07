@@ -125,8 +125,8 @@ jobs:
           run: |
             curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               -H "Content-Type: application/gzip" \
-              --data-binary @./builder/artifacts/${{ steps.artifact.outputs.artifact_name }} \
-              "${{ steps.create_release.outputs.releaseUploadURL }}?name=${{ steps.artifact.outputs.artifact_file }}&label=${{ steps.artifact.outputs.artifact_file }}"
+              --data-binary @./builder/artifacts/${{ steps.artifact.outputs.artifact_file }} \
+              "${{ steps.create_release.outputs.releaseUploadURL }}${{ steps.artifact.outputs.artifact_name }}&label=${{ steps.artifact.outputs.artifact_name }}"
             rm -rf ./builder/artifacts/${{ steps.artifact.outputs.artifact_name }}
         - name: Notify slack that the build succeeded
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && success()

@@ -101,6 +101,7 @@ jobs:
             echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
         - name: Create a release
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
+          id: create_release
           uses: actions/github-script@v6
           with:
             script: |

@@ -133,7 +133,7 @@ jobs:
           run: |
             curl -X POST -H 'Content-type: application/json' --data '{"text":"VisibleV8 build '${{ steps.get_release.outputs.currentGitCommit }}' for Chromium version '${{ steps.get_release.outputs.chromeReleaseVersion }}' has been successful!"}' ${{ secrets.SLACK_WEBHOOK  }}
         - name: Notify slack that the build failed
-          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && failure()
+          if: failure()
           run: |
             curl -X POST -H 'Content-type: application/json' --data '{"text":"VisibleV8 build '${{ steps.get_release.outputs.currentGitCommit }}' for Chromium version '${{ steps.get_release.outputs.chromeReleaseVersion }}' failed. Check the latest logs for errors."}' ${{ secrets.SLACK_WEBHOOK  }}
         - name: Cleaning up docker environment

@@ -80,10 +80,10 @@ jobs:
           with:
             context: ./builder/
             build-args: |
-              VERSION: ${{ steps.get_release.outputs.chromeReleaseVersion }}
-              ARTIFACTS_DIR: ./artifacts/
-              PACKAGE_NAME_AMD64: ${{ steps.artifact_name.outputs.artifact_name_amd64 }}
-              PACKAGE_NAME_ARM64: ${{ steps.artifact_name.outputs.artifact_name_arm64 }}
+              VERSION=${{ steps.get_release.outputs.chromeReleaseVersion }}
+              ARTIFACTS_DIR=./artifacts
+              PACKAGE_NAME_AMD64=${{ steps.artifact_name.outputs.artifact_name_amd64 }}
+              PACKAGE_NAME_ARM64=${{ steps.artifact_name.outputs.artifact_name_arm64 }}
             platforms: linux/amd64,linux/arm64
             file: ./builder/vv82dockerhub.dockerfile
             push: true

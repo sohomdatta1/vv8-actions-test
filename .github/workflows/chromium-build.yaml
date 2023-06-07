@@ -115,7 +115,7 @@ jobs:
                 prerelease: false
               });
               console.log(release);
-              core.setOutput('releaseUploadURL', response.data.upload_url);
+              core.setOutput('releaseUploadURL', release.data.upload_url);
               core.setOutput('release_id', release.data.id);
         - name: Upload artifacts
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}

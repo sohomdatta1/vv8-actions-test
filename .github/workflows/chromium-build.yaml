@@ -34,6 +34,7 @@ jobs:
               console.log(`currentGitCommit: ${currentGitCommit}`);
               console.log(`chromeReleaseVersion: ${chromeReleaseVersion}`);
               //const isPush = ${{ github.event_name == 'push' }};
+              const isPush = false;
               const shouldPublish = currentGitCommit !== commit || chromeReleaseVersion !== majorVersion || isPush;
               console.log(`shouldPublish: ${shouldPublish}`);
               console.log(`isPush: ${isPush}`);

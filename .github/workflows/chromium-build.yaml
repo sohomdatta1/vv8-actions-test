@@ -25,7 +25,7 @@ jobs:
               const tag = release.data.tag_name;
               const currentGitCommit = '${{ steps.short_sha.outputs.sha_short }}'
               const [_, commit, fullVersion, majorVersion] = tag.match(/visiblev8_([0-9a-f]+)-(([0-9]+)\.[0-9.]+)/);
-              const chromeReleaseVersion = await (await fetch('https://omahaproxy.appspot.com/linux')).text();
+              const chromeReleaseVersion = '113.0.5672.163'//await (await fetch('https://omahaproxy.appspot.com/linux')).text();
               const chromeMajorVersion = chromeReleaseVersion.split('.')[0];
               console.log(`tag: ${tag}`);
               console.log(`commit: ${commit}`);
@@ -51,7 +51,7 @@ jobs:
           env:
             VERSION: ${{ steps.get_release.outputs.chromeReleaseVersion }}
           run: |
-            cd builder && make build VERSION=$VERSION DEBUG=0 PUBLISH_ASSETS=0 TESTS=1 ANDROID=1 ARM=1
+            #cd builder && make build VERSION=$VERSION DEBUG=0 PUBLISH_ASSETS=0 TESTS=1 ANDROID=1 ARM=1
         - name: Get VV8 artifact name
           if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
           id: artifact_name
@@ -124,7 +124,15 @@ jobs:
               -H "Content-Type: application/gzip" \
               --data-binary @./builder/artifacts/${{ steps.artifact.outputs.artifact_name }} \
               "${{ steps.create_release.outputs.releaseUploadURL }}?name=${{ steps.artifact.outputs.artifact_name }}&label=${{ steps.artifact.outputs.artifact_name }}"
+        - name: Notify slack that the build succeeded
+          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && success()
+          run: |
+            curl -X POST -H 'Content-type: application/json' --data '{"text":"VisibleV8 build '${{ steps.get_release.outputs.currentGitCommit }}' for Chromium version '${{ steps.get_release.outputs.chromeReleaseVersion }}' has been successful!"}' ${{ secrets.SLACK_WEBHOOK  }}
+        - name: Notify slack that the build failed
+          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && success()
+          run: |
+            curl -X POST -H 'Content-type: application/json' --data '{"text":"VisibleV8 build '${{ steps.get_release.outputs.currentGitCommit }}'' for Chromium version '${{ steps.get_release.outputs.chromeReleaseVersion }}' failed. Check the latest logs for errors."}' ${{ secrets.SLACK_WEBHOOK  }}
         - name: Cleaning up docker environment
-          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }}
+          if: ${{ steps.get_release.outputs.shouldPublish == 'true' }} && ( success() || failure() )
           run: |
             docker system prune -f

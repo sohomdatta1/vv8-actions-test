@@ -58,7 +58,7 @@ jobs:
                 output += data.toString();
               }
             };
-            await exec.exec( 'git', [ '--no-pager', 'diff', '353d6fcabf1d742a6f5a52127fc687e0d94dedbb..15052165675f08af534d4116852c4cd76a5c563b', 'patches', 'builder', '.github' ], options );
+            await exec.exec( 'git', [ '--no-pager', 'diff', '353d6fcabf1d742a6f5a52127fc687e0d94dedbb..cb1a36ae77d9dd1efd24b0539cbcaef8afdaf0cb', 'patches', 'builder', '.github' ], options );
             core.setOutput( 'diff', atob(output) );
       - name: Should we publish ?
         id: shouldPublish

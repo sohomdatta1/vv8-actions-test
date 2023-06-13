@@ -59,7 +59,7 @@ jobs:
               }
             };
             await exec.exec( 'git', [ '--no-pager', 'diff', '15052165675f08af534d4116852c4cd76a5c563b..353d6fcabf1d742a6f5a52127fc687e0d94dedbb', 'patches', 'builder', '.github' ], options );
-            core.setOutput('diff', atob(output));
+            core.setOutput( 'diff', atob(output) );
       - name: Should we publish ?
         id: shouldPublish
         uses: actions/github-script@v6

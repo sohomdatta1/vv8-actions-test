@@ -3,12 +3,14 @@ package fptp
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/url"
 
 	"github.com/lib/pq"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/core"
+	"github.com/wspr-ncsu/visiblev8/post-processor/core"
+	"golang.org/x/net/publicsuffix"
 )
 
 type Script struct {
@@ -19,6 +21,18 @@ func NewScript(info *core.ScriptInfo) *Script {
 	return &Script{
 		info: info,
 	}
+}
+
+func split(s string, sep rune, n int) (string, string) {
+	for i, sep2 := range s {
+		if sep2 == sep {
+			n--
+			if n == 0 {
+				return s[:i], s[i+1:]
+			}
+		}
+	}
+	return s, ""
 }
 
 type fptpAggregator struct {
@@ -42,7 +56,7 @@ func NewFptpAggregator() (core.Aggregator, error) {
 }
 
 func (agg *fptpAggregator) IngestRecord(ctx *core.ExecutionContext, lineNumber int, op byte, fields []string) error {
-	if (ctx.Script != nil) && !ctx.Script.VisibleV8 && (ctx.Origin != "") {
+	if (ctx.Script != nil) && !ctx.Script.VisibleV8 && (ctx.Origin.Origin != "") {
 		_, ok := agg.scriptList[ctx.Script.ID]
 
 		if !ok {
@@ -53,6 +67,19 @@ func (agg *fptpAggregator) IngestRecord(ctx *core.ExecutionContext, lineNumber i
 	}
 
 	return nil
+}
+
+func (agg *fptpAggregator) accessEntityPropertyMap(origin string) (*EntityProperty, error) {
+	etldplusone, err := publicsuffix.EffectiveTLDPlusOne(origin)
+	if err != nil {
+		return nil, err
+	}
+	entity, ok := agg.eMap.EntityPropertyMap[etldplusone]
+	if !ok {
+		return nil, fmt.Errorf("no entity property found for origin %s", origin)
+	}
+
+	return entity, nil
 }
 
 var firstPartyThirdPartyFields = [...]string{
@@ -87,10 +114,8 @@ func (agg *fptpAggregator) DumpToPostgresql(ctx *core.AggregationContext, sqlDb 
 
 		rootURLOrigin := rootURL.Hostname()
 
-		var ok bool
-
-		agg.firstPartyProperty, ok = agg.eMap.EntityPropertyMap[rootURLOrigin]
-		if !ok {
+		agg.firstPartyProperty, err = agg.accessEntityPropertyMap(rootURLOrigin)
+		if err != nil {
 			agg.firstPartyProperty = &EntityProperty{
 				DisplayName: rootURLOrigin,
 				Tracking:    0.0,
@@ -113,13 +138,16 @@ func (agg *fptpAggregator) DumpToPostgresql(ctx *core.AggregationContext, sqlDb 
 	log.Printf("firstPartyThirdParty: %d scripts analysed", len(agg.scriptList))
 
 	for _, script := range agg.scriptList {
-		scriptURL, err := url.Parse(script.info.URL)
+		domain, _ := split(script.info.URL, '/', 3)
+		scriptURL, err := url.Parse(domain)
 
 		if err != nil {
 			return err
 		}
 
-		originURL, err := url.Parse(script.info.FirstOrigin)
+		domain, _ = split(script.info.FirstOrigin.Origin, '/', 3)
+
+		originURL, err := url.Parse(domain)
 
 		if err != nil {
 			return err
@@ -128,18 +156,19 @@ func (agg *fptpAggregator) DumpToPostgresql(ctx *core.AggregationContext, sqlDb 
 		scriptURLOrigin := scriptURL.Hostname()
 		originURLOrigin := originURL.Hostname()
 
-		scriptProperty, ok := agg.eMap.EntityPropertyMap[scriptURLOrigin]
-		if !ok {
+		scriptProperty, err := agg.accessEntityPropertyMap(scriptURLOrigin)
+		if err != nil {
 			scriptProperty = &EntityProperty{
 				DisplayName: scriptURLOrigin,
 				Tracking:    0.0,
 			}
 			agg.eMap.EntityPropertyMap[scriptURLOrigin] = scriptProperty
 		}
-		originProperty, ok := agg.eMap.EntityPropertyMap[originURLOrigin]
-		if !ok {
+		tracking := scriptProperty.Tracking
+		originProperty, err := agg.accessEntityPropertyMap(originURLOrigin)
+		if err != nil {
 			originProperty = &EntityProperty{
-				DisplayName: scriptURLOrigin,
+				DisplayName: originURLOrigin,
 				Tracking:    0.0,
 			}
 			agg.eMap.EntityPropertyMap[originURLOrigin] = originProperty
@@ -149,13 +178,13 @@ func (agg *fptpAggregator) DumpToPostgresql(ctx *core.AggregationContext, sqlDb 
 			script.info.CodeHash.SHA2[:],
 			rootDomain,
 			script.info.URL,
-			script.info.FirstOrigin,
+			script.info.FirstOrigin.Origin,
 			agg.firstPartyProperty.DisplayName,
 			scriptProperty.DisplayName,
 			originProperty.DisplayName,
-			scriptProperty.DisplayName == originProperty.DisplayName,
-			scriptProperty.DisplayName == agg.firstPartyProperty.DisplayName,
-			agg.eMap.EntityPropertyMap[scriptURLOrigin].Tracking,
+			scriptProperty.DisplayName != originProperty.DisplayName,
+			scriptProperty.DisplayName != agg.firstPartyProperty.DisplayName,
+			tracking,
 		)
 
 		if err != nil {
@@ -189,7 +218,7 @@ func (agg *fptpAggregator) DumpToStream(ctx *core.AggregationContext, stream io.
 			return err
 		}
 
-		originURL, err := url.Parse(script.info.FirstOrigin)
+		originURL, err := url.Parse(script.info.FirstOrigin.Origin)
 
 		if err != nil {
 			return err
@@ -198,18 +227,18 @@ func (agg *fptpAggregator) DumpToStream(ctx *core.AggregationContext, stream io.
 		scriptURLOrigin := scriptURL.Hostname()
 		originURLOrigin := originURL.Hostname()
 
-		scriptProperty, ok := agg.eMap.EntityPropertyMap[scriptURLOrigin]
-		if !ok {
+		scriptProperty, err := agg.accessEntityPropertyMap(scriptURLOrigin)
+		if err != nil {
 			scriptProperty = &EntityProperty{
 				DisplayName: scriptURLOrigin,
 				Tracking:    0.0,
 			}
 			agg.eMap.EntityPropertyMap[scriptURLOrigin] = scriptProperty
 		}
-		originProperty, ok := agg.eMap.EntityPropertyMap[originURLOrigin]
-		if !ok {
+		originProperty, err := agg.accessEntityPropertyMap(originURLOrigin)
+		if err != nil {
 			originProperty = &EntityProperty{
-				DisplayName: scriptURLOrigin,
+				DisplayName: originURLOrigin,
 				Tracking:    0.0,
 			}
 			agg.eMap.EntityPropertyMap[originURLOrigin] = originProperty
@@ -218,10 +247,10 @@ func (agg *fptpAggregator) DumpToStream(ctx *core.AggregationContext, stream io.
 		jstream.Encode(core.JSONArray{"firstpartythirdparty", core.JSONObject{
 			"SHA2":           script.info.CodeHash.SHA2[:],
 			"URL":            script.info.URL,
-			"FirstOrigin":    script.info.FirstOrigin,
+			"FirstOrigin":    script.info.FirstOrigin.Origin,
 			"ScriptProperty": scriptProperty.DisplayName,
 			"OriginProperty": originProperty.DisplayName,
-			"ThirdParty":     scriptProperty.DisplayName == originProperty.DisplayName,
+			"ThirdParty":     scriptProperty.DisplayName != originProperty.DisplayName,
 			"Tracking":       scriptProperty.Tracking,
 		}})
 	}

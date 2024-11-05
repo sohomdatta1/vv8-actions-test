@@ -8,8 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.ncsu.edu/jjuecks/vv8-post-processor/core"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/features"
+	"github.com/wspr-ncsu/visiblev8/post-processor/core"
 )
 
 // Feature stores a distinct "raw Feature name", its components, and any IDL data found
@@ -52,7 +51,7 @@ func NewAggregator() (core.Aggregator, error) {
 // IngestRecord does nothing for MicroScriptsAggregators (since we care only about the scripts processed by the core framework)
 func (agg *usageAggregator) IngestRecord(ctx *core.ExecutionContext, lineNumber int, op byte, fields []string) error {
 	// Only in a valid script/execution context...
-	if (ctx.Script != nil) && !ctx.Script.VisibleV8 && (ctx.Origin != "") {
+	if (ctx.Script != nil) && !ctx.Script.VisibleV8 && (ctx.Origin.Origin != "") {
 		// Raw field parsing/handling (offset, receiver/member, filtering, full-name)
 		offset, err := strconv.Atoi(fields[0])
 		if err != nil {
@@ -75,20 +74,22 @@ func (agg *usageAggregator) IngestRecord(ctx *core.ExecutionContext, lineNumber 
 			return fmt.Errorf("%d: invalid mode '%c'; fields: %v", lineNumber, op, fields)
 		}
 
-		if features.FilterName(member) {
+		if core.FilterName(member) {
 			// We have some names (V8 special cases, numeric indices) that are never useful
 			return nil
 		}
 
-		if strings.Contains(receiver, ",") {
-			receiver = strings.Split(receiver, ",")[1]
+		fullName, err := agg.idlTree.NormalizeMember(receiver, member)
+		if err != nil {
+			if member != "" {
+				fullName = fmt.Sprintf("%s.%s", receiver, member)
+			} else {
+				fullName = receiver
+			}
 		}
 
-		var fullName string
-		if member != "" {
-			fullName = fmt.Sprintf("%s.%s", receiver, member)
-		} else {
-			fullName = receiver
+		if strings.Contains(fullName, ",") {
+			fullName = strings.Split(fullName, ",")[1]
 		}
 
 		// Feature-map lookup/population (with IDL lookup)
@@ -109,7 +110,7 @@ func (agg *usageAggregator) IngestRecord(ctx *core.ExecutionContext, lineNumber 
 		// Usage-map counting
 		usage := Usage{
 			script:  ctx.Script,
-			origin:  ctx.Origin,
+			origin:  ctx.Origin.Origin,
 			feature: feature,
 			offset:  offset,
 			mode:    rune(op),

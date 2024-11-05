@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.ncsu.edu/jjuecks/vv8-post-processor/core"
+	"github.com/wspr-ncsu/visiblev8/post-processor/core"
 )
 
 // scriptHashIDMap is used to map the global script body identifiers to Postgres FK IDs
@@ -34,7 +34,7 @@ func (agg *usageAggregator) DumpToPostgresql(ctx *core.AggregationContext, sqlDb
 	var pctx postgresqlContext
 
 	// Step 0: Make sure the current log file is inserted (and get its ID)
-	pctx.logfileID, err = InsertLogfile(sqlDb, ctx.Ln)
+	pctx.logfileID, err = ctx.Ln.InsertLogfile(sqlDb)
 	if err != nil {
 		return fmt.Errorf("megaFeatures.DumpToMongresql/logFile: %w", err)
 	}
@@ -276,8 +276,8 @@ func (pctx *postgresqlContext) sqlDumpScriptInstances(sqlDb *sql.DB, ln *core.Lo
 			}
 
 			var originURLHash, scriptURLHash interface{}
-			if script.FirstOrigin != "" {
-				temp := ub.URLToHash(script.FirstOrigin)
+			if script.FirstOrigin.Origin != "" {
+				temp := ub.URLToHash(script.FirstOrigin.Origin)
 				originURLHash = temp[:]
 			}
 			if script.URL != "" {

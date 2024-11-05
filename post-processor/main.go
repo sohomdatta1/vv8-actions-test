@@ -15,19 +15,19 @@ import (
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
+	"github.com/wspr-ncsu/visiblev8/post-processor/adblock"
+	"github.com/wspr-ncsu/visiblev8/post-processor/callargs"
+	"github.com/wspr-ncsu/visiblev8/post-processor/causality"
+	"github.com/wspr-ncsu/visiblev8/post-processor/core"
+	"github.com/wspr-ncsu/visiblev8/post-processor/elements"
+	"github.com/wspr-ncsu/visiblev8/post-processor/features"
+	"github.com/wspr-ncsu/visiblev8/post-processor/flow"
+	"github.com/wspr-ncsu/visiblev8/post-processor/fptp"
+	"github.com/wspr-ncsu/visiblev8/post-processor/idl_apis"
+	"github.com/wspr-ncsu/visiblev8/post-processor/mega"
+	"github.com/wspr-ncsu/visiblev8/post-processor/micro"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/gridfs"
-
-	"github.ncsu.edu/jjuecks/vv8-post-processor/adblock"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/callargs"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/causality"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/core"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/elements"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/features"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/flow"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/fptp"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/mega"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/micro"
 )
 
 // Version is set during build (to the git hash of the compiled code)
@@ -50,6 +50,7 @@ func nullCtor() (core.Aggregator, error) {
 
 // acceptedOutputFormats is the master map of supported aggregators and their short-names used by the CLI
 var acceptedOutputFormats = map[string]formatAggregator{
+	"idlapis":           {"idlApis", idl_apis.NewAggregator},
 	"adblock":           {"Adblock", adblock.NewAdblockAggregator},
 	"fptp":              {"FirstPartyToThirdParty", fptp.NewFptpAggregator},
 	"callargs":          {"CallArguments", callargs.NewCreateCallArgsAggregator},
@@ -137,11 +138,13 @@ func invoke(args []string, topLevel bool) error {
 	var aggPasses string
 	var outputFormat string
 	var SubmissionID string
+	var rootDomain string
 	var annotate, showVersion bool
 
 	flags := flag.NewFlagSet("vv8PostProcessor", flag.ContinueOnError)
 	flags.BoolVar(&showVersion, "version", false, "show version (Git commit hash) and quit")
 	flags.StringVar(&SubmissionID, "submissionid", "", "manually specify a submission id to associate with logfiles (used for getting the URL that is being visited)")
+	flags.StringVar(&rootDomain, "rootdomain", "", "manually specify a root domain to associate with logfiles (used for getting the URL that is being visited)")
 	flags.BoolVar(&annotate, "annotate", false, "skip aggregating and dump JSON-annotated log lines to stdout (script/offset context, if any)")
 	flags.StringVar(&aggPasses, "aggs", "noop", "one or more ('+'-delimited) aggregation passes to perform")
 	flags.StringVar(&outputFormat, "output", "stdout", "send data to `dest`; options: 'stdout', 'postgresql'")
@@ -167,6 +170,10 @@ func invoke(args []string, topLevel bool) error {
 
 	if SubmissionID != "" {
 		aggCtx.SubmissionID = uuid.MustParse(SubmissionID)
+	}
+
+	if rootDomain != "" {
+		aggCtx.RootDomain = rootDomain
 	}
 
 	// Parse outputs (actualy, passes) from our sole positional argument

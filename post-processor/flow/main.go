@@ -10,8 +10,7 @@ import (
 	"strings"
 
 	"github.com/lib/pq"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/core"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/features"
+	"github.com/wspr-ncsu/visiblev8/post-processor/core"
 )
 
 type Script struct {
@@ -38,7 +37,7 @@ func NewAggregator() (core.Aggregator, error) {
 }
 
 func (agg *flowAggregator) IngestRecord(ctx *core.ExecutionContext, lineNumber int, op byte, fields []string) error {
-	if (ctx.Script != nil) && !ctx.Script.VisibleV8 && (ctx.Origin != "") {
+	if (ctx.Script != nil) && !ctx.Script.VisibleV8 && (ctx.Origin.Origin != "") {
 		offset, err := strconv.Atoi(fields[0])
 		if err != nil {
 			return fmt.Errorf("%d: invalid script offset '%s'", lineNumber, fields[0])
@@ -60,7 +59,7 @@ func (agg *flowAggregator) IngestRecord(ctx *core.ExecutionContext, lineNumber i
 			return fmt.Errorf("%d: invalid mode '%c'; fields: %v", lineNumber, op, fields)
 		}
 
-		if features.FilterName(member) {
+		if core.FilterName(member) {
 			// We have some names (V8 special cases, numeric indices) that are never useful
 			return nil
 		}
@@ -135,7 +134,7 @@ func (agg *flowAggregator) DumpToPostgresql(ctx *core.AggregationContext, sqlDb 
 			script.info.URL,
 			evaledById,
 			pq.Array(script.APIs),
-			script.info.FirstOrigin)
+			script.info.FirstOrigin.Origin)
 
 		if err != nil {
 			txn.Rollback()

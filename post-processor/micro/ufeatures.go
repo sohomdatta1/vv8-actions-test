@@ -7,8 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"github.ncsu.edu/jjuecks/vv8-post-processor/core"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/features"
+	"github.com/wspr-ncsu/visiblev8/post-processor/core"
 )
 
 // FeatureUsageAggregator implements the Aggregator interface for collecting minimal script API usage data
@@ -34,7 +33,7 @@ func NewFeatureUsageAggregator() (core.Aggregator, error) {
 
 // IngestRecord extracts minimal script API usage stats from each callsite record
 func (agg *FeatureUsageAggregator) IngestRecord(ctx *core.ExecutionContext, lineNumber int, op byte, fields []string) error {
-	if (ctx.Script != nil) && !ctx.Script.VisibleV8 && (ctx.Origin != "") {
+	if (ctx.Script != nil) && !ctx.Script.VisibleV8 && (ctx.Origin.Origin != "") {
 		var rcvr, name, fullName string
 		switch op {
 		case 'g':
@@ -58,7 +57,7 @@ func (agg *FeatureUsageAggregator) IngestRecord(ctx *core.ExecutionContext, line
 		}
 
 		// We have some names (V8 special cases, numeric indices) that are never useful
-		if features.FilterName(name) {
+		if core.FilterName(name) {
 			return nil
 		}
 
@@ -74,10 +73,10 @@ func (agg *FeatureUsageAggregator) IngestRecord(ctx *core.ExecutionContext, line
 
 		// We log only IDL-normalized members
 		// Stick it in our aggregation map
-		originSet, ok := agg.usage[ctx.Origin]
+		originSet, ok := agg.usage[ctx.Origin.Origin]
 		if !ok {
 			originSet = make(map[string]bool)
-			agg.usage[ctx.Origin] = originSet
+			agg.usage[ctx.Origin.Origin] = originSet
 		}
 		originSet[fullName] = true
 	}
@@ -113,7 +112,7 @@ func (agg *FeatureUsageAggregator) DumpToStream(ctx *core.AggregationContext, st
 func (agg *FeatureUsageAggregator) DumpToPostgresql(ctx *core.AggregationContext, sqlDb *sql.DB) error {
 	if ctx.Formats["ufeatures"] {
 
-		logID, err := features.InsertLogfile(sqlDb, ctx.Ln)
+		logID, err := ctx.Ln.InsertLogfile(sqlDb)
 		if err != nil {
 			return err
 		}

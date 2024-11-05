@@ -11,8 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.ncsu.edu/jjuecks/vv8-post-processor/core"
-	"github.ncsu.edu/jjuecks/vv8-post-processor/features"
+	"github.com/wspr-ncsu/visiblev8/post-processor/core"
 )
 
 type originCallsite struct {
@@ -45,7 +44,7 @@ func NewCreateCallArgsAggregator() (core.Aggregator, error) {
 
 // IngestRecord parses a trace record, looking for document.createElement calls to track
 func (agg *CreateCallArgsAggregator) IngestRecord(ctx *core.ExecutionContext, lineNumber int, op byte, fields []string) error {
-	if (op == 'c') && (ctx.Script != nil) && !ctx.Script.VisibleV8 && (ctx.Origin != "") {
+	if (op == 'c') && (ctx.Script != nil) && !ctx.Script.VisibleV8 && (ctx.Origin.Origin != "") {
 		offset, err := strconv.Atoi(fields[0])
 		if err != nil {
 			return fmt.Errorf("%d: invalid script offset '%s'", lineNumber, fields[0])
@@ -59,7 +58,7 @@ func (agg *CreateCallArgsAggregator) IngestRecord(ctx *core.ExecutionContext, li
 		name = strings.TrimPrefix(name, "%")
 
 		// We have some names (V8 special cases, numeric indices) that are never useful
-		if features.FilterName(name) {
+		if core.FilterName(name) {
 			return nil
 		}
 
@@ -70,7 +69,7 @@ func (agg *CreateCallArgsAggregator) IngestRecord(ctx *core.ExecutionContext, li
 		}
 
 		// Create the call site to record
-		cite := originCallsite{ctx.Origin, ctx.Script, offset, fullName}
+		cite := originCallsite{ctx.Origin.Origin, ctx.Script, offset, fullName}
 		args := agg.callInfo[cite]
 		if args == nil {
 			args = make([][]string, 0)

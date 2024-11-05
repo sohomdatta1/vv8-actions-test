@@ -16,7 +16,7 @@ jobs:
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: visiblev8
+          username: sohomdatta1
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Extract short SHA
         id: short_sha
